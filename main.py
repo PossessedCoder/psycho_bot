@@ -7,7 +7,7 @@ import asyncio
 from handlers.handlers import router
 from aiogram.client.session.aiohttp import AiohttpSession
 
-session = AiohttpSession(proxy='151.252.80.124:1080')
+session = AiohttpSession()
 
 async def init_models():
     async with engine.begin() as conn:

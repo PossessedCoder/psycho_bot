@@ -8,7 +8,7 @@ from aiogram import types
 from utils.utils import simple_inline, show_main_menu, delete_message_safe
 import logging
 from aiogram.types import CallbackQuery, Message
-
+from math import ceil
 CHANNEL_USERNAME = "@The_Logic_of_Emotions"
 CHANNEL_LINK = "https://t.me/The_Logic_of_Emotions"
 router = Router()
@@ -70,34 +70,45 @@ async def question_test(callback: CallbackQuery, state: FSMContext, bot: Bot):
     question_number = int(callback.data.split('_')[2])
     test_data = get_data(f'config/{test}.json')
     answer_count = int(test_data['test']['key']['answers_count'])
+    if 'back' in callback.data:
+        if question_number != -1:
+            data = await state.get_data()
+            items = data.get('answers', [])
+            items.pop(-1)
+            # 3. Обновляем состояние
+            await state.update_data(answers=items)
+        else:
+            return await cmd_start(message=callback.message, bot=bot)
     if question_number == 0:
         await state.set_state(Test.waiting_for_answer)
         await state.update_data(answers=[])
         if answer_count == 2:
-            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline([[['ДА', f'{test}_question_{question_number + 1}_{2}'], ['НЕТ', f'{test}_question_{question_number + 1}_{1}']]]))
+            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline([[['ДА', f'{test}_question_{question_number + 1}_{2}'], ['НЕТ', f'{test}_question_{question_number + 1}_{1}']], [['НАЗАД', f'{test}_question_{question_number - 1}_back_-1']]]))
         else:
             lst = [[]]
             for i in range(answer_count):
                 lst[0].append([str(i + 1), f'{test}_question_{question_number + 1}_{i + 1}'])
             print(lst)
+            lst.append([['НАЗАД', f'{test}_question_{question_number - 1}_back_-1']])
             await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline(lst))
     elif question_number == len(test_data['test']['questions']):
         await callback.message.answer(text='УЗНАТЬ РЕЗУЛЬТАТЫ?', reply_markup=await simple_inline([[['РЕЗУЛЬТАТЫ', f'{test}_results_{callback.data.split('_')[-1]}']]]))
     else:
         data = await state.get_data()
         items = data.get('answers', [])
-
+        if callback.data.split('_')[-1] != '-1':
         # 2. Добавляем
-        items.append(callback.data.split('_')[-1])
+            items.append(callback.data.split('_')[-1])
 
-        # 3. Обновляем состояние
-        await state.update_data(answers=items)
+            # 3. Обновляем состояние
+            await state.update_data(answers=items)
         if answer_count == 2:
-            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline([[['ДА', f'{test}_question_{question_number + 1}_{2}'], ['НЕТ', f'{test}_question_{question_number + 1}_{1}']]]))
+            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline([[['ДА', f'{test}_question_{question_number + 1}_{2}'], ['НЕТ', f'{test}_question_{question_number + 1}_{1}']], [['НАЗАД', f'{test}_question_{question_number - 1}_back_-1']]]))
         else:
             lst = [[]]
             for i in range(answer_count):
                 lst[0].append([str(i + 1), f'{test}_question_{question_number + 1}_{i + 1}'])
+            lst.append([['НАЗАД', f'{test}_question_{question_number - 1}_back_-1']])
             print(lst)
             await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline(lst))
 
@@ -122,10 +133,10 @@ async def results(callback: CallbackQuery, state: FSMContext):
             for j in keys[i]['yes'].keys():
                 print(answers[int(j) - 1], keys[i]['yes'][j])
                 if answers[int(j) - 1] in keys[i]['yes'][j]:
-                    c += abs(answers[int(j) - 1])
+                    c += 1
             for j in keys[i]['no'].keys():
                 if answers[int(j) - 1] not in keys[i]['no'][j]:
-                    d += abs(answers[int(j) - 1])
+                    d += 1
             print(c, d)
             lst[list(keys.keys())[1::].index(i)] += c + d
         if lst.count(max(lst)) > 1:
@@ -139,8 +150,9 @@ async def results(callback: CallbackQuery, state: FSMContext):
             char = ty['characteristics']
             await callback.message.answer(
                 text=f'{name}\n\n{desc}\n\nХарактеристика:\n{''.join(['•' + el + '\n' for el in char])}')
+        print(lst)
     else:
-        a = round(answer_count / 2)
+        a = ceil(answer_count / 2)
         print(a)
         lst = [0] * len(list(keys.keys())[1::])
         for i in list(keys.keys())[1::]:
