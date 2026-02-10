@@ -175,7 +175,7 @@ async def results(callback: CallbackQuery, state: FSMContext):
             name = ty['name']
             desc = ty['description']
             char = ty['characteristics']
-            await callback.message.answer(text=f'{name}\n\n{desc}\n\nХарактеристика:\n{''.join(['•' + el + '\n' for el in char])}')
+            await callback.message.answer(text=f'{name}\n\n{desc}\n\n')
         print(lst)
     print(answers)
 
