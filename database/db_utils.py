@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db_class import async_session, User, Test
+from .db_class import async_session, User, Test
 
 def connection(method):
     async def wrapper(*args, **kwargs):
@@ -35,3 +35,7 @@ async def add_user(session: AsyncSession, tg_id, username, first_name):
 @connection
 async def add_test_to_database(session: AsyncSession, test_name, filename):
     session.add(Test(name=test_name, file_name=filename))
+
+async def get_test_filename_by_name(session: AsyncSession, name):
+    req = select(Test).where(Test.name == name)
+    return (await session.scalars(req)).one().file_name

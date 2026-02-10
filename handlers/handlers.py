@@ -1,3 +1,4 @@
+from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from aiogram import F, Bot, Router
@@ -27,6 +28,7 @@ async def check_subscription(user_id: int, bot: Bot) -> bool:
         logger.error(f"Ошибка проверки подписки: {e}")
         return False
 
+@router.callback_query(F.data == 'to_start')
 @router.message(Command("start"))
 async def cmd_start(message: types.Message, bot: Bot):
     user_id = message.from_user.id
@@ -54,6 +56,116 @@ async def show_subscription_request(message: types.Message):
         reply_markup=keyboard
     )
 
+@router.callback_query(F.data.startswith("teststart"))
+async def test_start(callback: CallbackQuery, bot: Bot):
+    await delete_message_safe(callback.message)
+    test = callback.data.split('_')[1]
+    test_data = get_data(f'config/{test}.json')
+    await bot.send_message(chat_id=callback.from_user.id, text=test_data['test']['start_message'], reply_markup=await simple_inline([[['НАЧАТЬ ТЕСТ', f'{test}_question_0_0']]]))
+
+@router.callback_query(F.data.contains('question'))
+async def question_test(callback: CallbackQuery, state: FSMContext, bot: Bot):
+    await delete_message_safe(callback.message)
+    test = callback.data.split('_')[0]
+    question_number = int(callback.data.split('_')[2])
+    test_data = get_data(f'config/{test}.json')
+    answer_count = int(test_data['test']['key']['answers_count'])
+    if question_number == 0:
+        await state.set_state(Test.waiting_for_answer)
+        await state.update_data(answers=[])
+        if answer_count == 2:
+            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline([[['ДА', f'{test}_question_{question_number + 1}_{2}'], ['НЕТ', f'{test}_question_{question_number + 1}_{1}']]]))
+        else:
+            lst = [[]]
+            for i in range(answer_count):
+                lst[0].append([str(i + 1), f'{test}_question_{question_number + 1}_{i + 1}'])
+            print(lst)
+            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline(lst))
+    elif question_number == len(test_data['test']['questions']):
+        await callback.message.answer(text='УЗНАТЬ РЕЗУЛЬТАТЫ?', reply_markup=await simple_inline([[['РЕЗУЛЬТАТЫ', f'{test}_results_{callback.data.split('_')[-1]}']]]))
+    else:
+        data = await state.get_data()
+        items = data.get('answers', [])
+
+        # 2. Добавляем
+        items.append(callback.data.split('_')[-1])
+
+        # 3. Обновляем состояние
+        await state.update_data(answers=items)
+        if answer_count == 2:
+            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline([[['ДА', f'{test}_question_{question_number + 1}_{2}'], ['НЕТ', f'{test}_question_{question_number + 1}_{1}']]]))
+        else:
+            lst = [[]]
+            for i in range(answer_count):
+                lst[0].append([str(i + 1), f'{test}_question_{question_number + 1}_{i + 1}'])
+            print(lst)
+            await callback.message.answer(test_data['test']['questions'][question_number], reply_markup=await simple_inline(lst))
+
+@router.callback_query(F.data.contains('results'))
+async def results(callback: CallbackQuery, state: FSMContext):
+    await delete_message_safe(callback.message)
+    test = callback.data.split('_')[0]
+    test_data = get_data(f'config/{test}.json')
+    keys: dict = test_data['test']['key']
+    answers = (await state.get_data())['answers']
+    answers.append(callback.data.split('_')[-1])
+    answers = list(map(int, answers))
+    types = test_data['test']['types']
+    answer_count = int(test_data['test']['key']['answers_count'])
+    print(keys)
+    if answer_count == 2:
+        lst = [0] * len(list(keys.keys())[1::])
+        for i in list(keys.keys())[1::]:
+            print(i)
+            c = 0
+            d = 0
+            for j in keys[i]['yes'].keys():
+                print(answers[int(j) - 1], keys[i]['yes'][j])
+                if answers[int(j) - 1] in keys[i]['yes'][j]:
+                    c += abs(answers[int(j) - 1])
+            for j in keys[i]['no'].keys():
+                if answers[int(j) - 1] not in keys[i]['no'][j]:
+                    d += abs(answers[int(j) - 1])
+            print(c, d)
+            lst[list(keys.keys())[1::].index(i)] += c + d
+        if lst.count(max(lst)) > 1:
+            await callback.message.answer(
+                text='Вы невнимательно проходили тест, результаты получить не удалось. Пройти ещё раз?',
+                reply_markup=await simple_inline([[['ДА', f'teststart_{test}'], ['НЕТ', 'to_start']]]))
+        else:
+            ty = types[list(keys.keys())[1::][lst.index(max(lst))]]
+            name = ty['name']
+            desc = ty['description']
+            char = ty['characteristics']
+            await callback.message.answer(
+                text=f'{name}\n\n{desc}\n\nХарактеристика:\n{''.join(['•' + el + '\n' for el in char])}')
+    else:
+        a = round(answer_count / 2)
+        print(a)
+        lst = [0] * len(list(keys.keys())[1::])
+        for i in list(keys.keys())[1::]:
+            print(i)
+            c = 0
+            d = 0
+            for j in keys[i]['yes'].keys():
+                print(answers[int(j) - 1], keys[i]['yes'][j])
+                if answers[int(j) - 1] in keys[i]['yes'][j]:
+                    c += abs(a - answers[int(j) - 1])
+            for j in keys[i]['no'].keys():
+                if answers[int(j) - 1] in keys[i]['no'][j]:
+                    d += abs(a - answers[int(j) - 1])
+            print(c, d)
+            lst[list(keys.keys())[1::].index(i)] += c - d
+        if lst.count(max(lst)) > 1:
+            await callback.message.answer(text='Вы невнимательно проходили тест, результаты получить не удалось. Пройти ещё раз?', reply_markup=await simple_inline([[['ДА', f'teststart_{test}'], ['НЕТ', 'to_start']]]))
+        else:
+            ty = types[list(keys.keys())[1::][lst.index(max(lst))]]
+            name = ty['name']
+            desc = ty['description']
+            char = ty['characteristics']
+            await callback.message.answer(text=f'{name}\n\n{desc}\n\nХарактеристика:\n{''.join(['•' + el + '\n' for el in char])}')
+        print(lst)
+    print(answers)
 
 
 

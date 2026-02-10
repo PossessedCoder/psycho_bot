@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import types
-
+from database.db_utils import get_tests
 async def delete_message_safe(message: types.Message):
     """Безопасное удаление сообщения с обработкой ошибок"""
     try:
@@ -26,10 +26,7 @@ async def simple_inline(lst):
 
 # Главное меню
 async def show_main_menu(message: types.Message):
-    keyboard = await simple_inline([
-        [["🧠 Тип привязанности", "test_attachment"]],
-        [["⏰ Причина прокрастинации", "test_procrastination"]],
-        [["🎭 Акцентуация характера", "test_accentuation"]]
-    ])
+    lst = [[[el.name, f'teststart_{el.file_name}']] for el in await get_tests()]
+    keyboard = await simple_inline(lst)
 
     return ("🎯 ВЫБЕРИТЕ ТЕСТ:\n\n1. Тип привязанности - узнайте ваш стиль отношений\n2. Причина прокрастинации - поймите, что мешает действовать\n3. Акцентуация характера - определите ведущие черты личности\n\n👉 Нажмите на кнопку ниже:", keyboard)
