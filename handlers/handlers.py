@@ -30,6 +30,7 @@ async def check_subscription(user_id: int, bot: Bot) -> bool:
 
 @router.callback_query(F.data == 'to_start')
 @router.message(Command("start"))
+@router.message(F.text == 'ДОМОЙ')
 async def cmd_start(message: types.Message, bot: Bot):
     user_id = message.from_user.id
     if await check_subscription(user_id, bot):
@@ -177,6 +178,7 @@ async def results(callback: CallbackQuery, state: FSMContext):
             char = ty['characteristics']
             await callback.message.answer(text=f'{name}\n\n{desc}\n\n')
         print(lst)
+    await state.clear()
     print(answers)
 
 
