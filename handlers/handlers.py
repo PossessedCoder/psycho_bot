@@ -3,13 +3,14 @@ from aiogram.fsm.state import StatesGroup, State
 
 from aiogram import F, Bot, Router
 from aiogram.filters import Command, CommandStart
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from sqlalchemy.testing.suite.test_reflection import users
 
 from utils.json_utils import get_data
 from aiogram import types
-from utils.utils import simple_inline, show_main_menu, delete_message_safe
+from utils.utils import simple_inline, show_main_menu, delete_message_safe, get_main_keyboard
 import logging
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup
 from math import ceil
 CHANNEL_USERNAME = "@dariainpsycho"
 CHANNEL_LINK = "https://t.me/dariainpsycho"
@@ -30,27 +31,56 @@ async def check_subscription(user_id: int, bot: Bot) -> bool:
         logger.error(f"Ошибка проверки подписки: {e}")
         return False
 
-@router.callback_query(F.data == 'to_start')
+
 @router.message(Command("start"))
-@router.message(F.text == 'ДОМОЙ')
 async def cmd_start(message: types.Message, bot: Bot):
     user_id = message.from_user.id
     if await check_subscription(user_id, bot):
         print(1)
         if isinstance(message, types.Message):
-            a = await show_main_menu(message)
-            await message.answer(a[0], reply_markup= a[1])
+            await message.answer('главное сообщение', reply_markup=await get_main_keyboard())
+            await message.answer('Главное сообщение 2', reply_markup=await simple_inline([[['Тесты', 'main_test']], [['Путеводитель по каналу', 'channel_guide'], ['Запись на консультацию', 'https://t.me/dariainpsycho/15|url']]]))
         else:
-            a = await show_main_menu(message)
-            await message.message.answer(a[0], reply_markup=a[1])
+            await message.message.answer('главное сообщение', reply_markup=await get_main_keyboard())
+            await message.message.answer('Главное сообщение 2', reply_markup=await simple_inline([[['Тесты', 'main_test']],
+                                                                                          [['Путеводитель по каналу',
+                                                                                            'channel_guide'],
+                                                                                           ['Запись на консультацию',
+                                                                                            'https://t.me/dariainpsycho/15|url']]]))
     else:
         print(2)
         if isinstance(message, types.Message):
+
             await show_subscription_request(message)
         else:
             await show_subscription_request(message.message)
 
 
+@router.callback_query(F.data == 'to_start')
+@router.message(F.text == 'ДОМОЙ')
+async def main_message(message: CallbackQuery | Message, bot):
+    user_id = message.from_user.id
+    if await check_subscription(user_id, bot):
+        print(1)
+        if isinstance(message, types.Message):
+            await message.answer('Главное сообщение 2', reply_markup=await simple_inline([[['Тесты', 'main_test']],
+                                                                                          [['Путеводитель по каналу',
+                                                                                            'channel_guide'],
+                                                                                           ['Запись на консультацию',
+                                                                                            'https://t.me/dariainpsycho/15|url']]]))
+        else:
+            await message.message.answer('Главное сообщение 2', reply_markup=await simple_inline([[['Тесты', 'main_test']],
+                                                                                          [['Путеводитель по каналу',
+                                                                                            'channel_guide'],
+                                                                                           ['Запись на консультацию',
+                                                                                            'https://t.me/dariainpsycho/15|url']]]))
+    else:
+        print(2)
+        if isinstance(message, types.Message):
+            await message.answer('главное сообщение', reply_markup=await get_main_keyboard())
+            await show_subscription_request(message)
+        else:
+            await show_subscription_request(message.message)
 
 # Показать меню подписки
 async def show_subscription_request(message: types.Message):
@@ -66,6 +96,22 @@ async def show_subscription_request(message: types.Message):
         "После подписки нажмите кнопку 'Я подписался, проверить'",
         reply_markup=keyboard
     )
+
+@router.callback_query(F.data == 'main_test')
+@router.message('Тесты')
+async def tests(message: CallbackQuery | Message):
+    if isinstance(message, CallbackQuery):
+        a = await show_main_menu(message.message)
+        await message.message.answer(a[0], reply_markup=a[1])
+        await delete_message_safe(message.message)
+    else:
+        a = await show_main_menu(message)
+        await message.answer(a[0], reply_markup=a[1])
+        await delete_message_safe(message)
+
+@router.callback_query(F.data == 'channel_guide')
+async def channel_guide(message: CallbackQuery):
+    await message.message.answer('🛠 Функция в разработке')
 
 @router.callback_query(F.data.startswith("teststart"))
 async def test_start(callback: CallbackQuery, bot: Bot):

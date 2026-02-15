@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder, KeyboardButton
 from aiogram import types
 from database.db_utils import get_tests
 async def delete_message_safe(message: types.Message):
@@ -30,3 +30,10 @@ async def show_main_menu(message: types.Message):
     keyboard = await simple_inline(lst)
 
     return ("🎯 ВЫБЕРИТЕ ТЕСТ:\n\n1. Тип привязанности - узнайте ваш стиль отношений\n2. Причина прокрастинации - поймите, что мешает действовать\n3. Акцентуация характера - определите ведущие черты личности\n\n👉 Нажмите на кнопку ниже:", keyboard)
+
+async def get_main_keyboard():
+    builder = ReplyKeyboardBuilder()
+    builder.row(KeyboardButton(text='Главная страница'), KeyboardButton(text='Тесты'), KeyboardButton(text='Вопрос дня'), KeyboardButton(text='Профиль'))
+    a = builder.as_markup()
+    a.resize_keyboard = True
+    return a
