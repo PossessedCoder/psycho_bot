@@ -115,11 +115,11 @@ async def channel_guide(message: CallbackQuery):
 
 
 @router.message(F.text == 'Вопрос дня')
-async def channel_guide(message: CallbackQuery):
+async def question_of_the_day(message: Message):
     await message.message.answer('🛠 Функция в разработке')
 
 @router.message(F.text == 'Профиль')
-async def channel_guide(message: CallbackQuery):
+async def profile(message: Message):
     await message.message.answer('🛠 Функция в разработке')
 
 
