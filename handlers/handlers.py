@@ -57,7 +57,7 @@ async def cmd_start(message: types.Message, bot: Bot):
 
 
 @router.callback_query(F.data == 'to_start')
-@router.message(F.text == 'ДОМОЙ')
+@router.message(F.text == 'Главная страница')
 async def main_message(message: CallbackQuery | Message, bot):
     user_id = message.from_user.id
     if await check_subscription(user_id, bot):
@@ -112,6 +112,16 @@ async def tests(message: CallbackQuery | Message):
 @router.callback_query(F.data == 'channel_guide')
 async def channel_guide(message: CallbackQuery):
     await message.message.answer('🛠 Функция в разработке')
+
+
+@router.message(F.text == 'Вопрос дня')
+async def channel_guide(message: CallbackQuery):
+    await message.message.answer('🛠 Функция в разработке')
+
+@router.message(F.text == 'Профиль')
+async def channel_guide(message: CallbackQuery):
+    await message.message.answer('🛠 Функция в разработке')
+
 
 @router.callback_query(F.data.startswith("teststart"))
 async def test_start(callback: CallbackQuery, bot: Bot):
