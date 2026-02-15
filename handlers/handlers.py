@@ -3,6 +3,8 @@ from aiogram.fsm.state import StatesGroup, State
 
 from aiogram import F, Bot, Router
 from aiogram.filters import Command, CommandStart
+from sqlalchemy.testing.suite.test_reflection import users
+
 from utils.json_utils import get_data
 from aiogram import types
 from utils.utils import simple_inline, show_main_menu, delete_message_safe
@@ -35,11 +37,19 @@ async def cmd_start(message: types.Message, bot: Bot):
     user_id = message.from_user.id
     if await check_subscription(user_id, bot):
         print(1)
-        a = await show_main_menu(message)
-        await message.answer(a[0], reply_markup= a[1])
+        if isinstance(message, types.Message):
+            a = await show_main_menu(message)
+            await message.answer(a[0], reply_markup= a[1])
+        else:
+            a = await show_main_menu(message)
+            await message.message.answer(a[0], reply_markup=a[1])
     else:
         print(2)
-        await show_subscription_request(message)
+        if isinstance(message, types.Message):
+            await show_subscription_request(message)
+        else:
+            await show_subscription_request(message.message)
+
 
 
 # Показать меню подписки
