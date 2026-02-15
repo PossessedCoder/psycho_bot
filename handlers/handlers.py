@@ -150,7 +150,7 @@ async def results(callback: CallbackQuery, state: FSMContext):
             desc = ty['description']
             char = ty['characteristics']
             await callback.message.answer(
-                text=f'{name}\n\n{desc}\n\n', reply_markup=await simple_inline([[['Читать', f'tg://resolve?domain={CHANNEL_LINK}|url']], [['ВЕРНУТЬСЯ К ТЕСТАМ', 'to_start']]]))
+                text=f'{name}\n\n{desc}\n\n', reply_markup=await simple_inline([[['Читать', f'tg://resolve?domain={CHANNEL_LINK[1::]}|url']], [['ВЕРНУТЬСЯ К ТЕСТАМ', 'to_start']]]))
         print(lst)
     else:
         a = ceil(answer_count / 2)
@@ -176,7 +176,7 @@ async def results(callback: CallbackQuery, state: FSMContext):
             name = ty['name']
             desc = ty['description']
             char = ty['characteristics']
-            await callback.message.answer(text=f'{name}\n\n{desc}\n\n', reply_markup=await simple_inline([[['Читать', f'tg://resolve?domain={CHANNEL_LINK}|url']], [['ВЕРНУТЬСЯ К ТЕСТАМ', 'to_start']]]))
+            await callback.message.answer(text=f'{name}\n\n{desc}\n\n', reply_markup=await simple_inline([[['Читать', f'tg://resolve?domain={CHANNEL_LINK[1::]}|url']], [['ВЕРНУТЬСЯ К ТЕСТАМ', 'to_start']]]))
         print(lst)
     await state.clear()
     print(answers)
