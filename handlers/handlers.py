@@ -98,7 +98,7 @@ async def show_subscription_request(message: types.Message):
     )
 
 @router.callback_query(F.data == 'main_test')
-@router.message('Тесты')
+@router.message(F.text == 'Тесты')
 async def tests(message: CallbackQuery | Message):
     if isinstance(message, CallbackQuery):
         a = await show_main_menu(message.message)
