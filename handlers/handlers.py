@@ -11,8 +11,8 @@ from utils.utils import simple_inline, show_main_menu, delete_message_safe
 import logging
 from aiogram.types import CallbackQuery, Message
 from math import ceil
-CHANNEL_USERNAME = "@The_Logic_of_Emotions"
-CHANNEL_LINK = "https://t.me/The_Logic_of_Emotions"
+CHANNEL_USERNAME = "@dariainpsycho"
+CHANNEL_LINK = "https://t.me/dariainpsycho"
 router = Router()
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
